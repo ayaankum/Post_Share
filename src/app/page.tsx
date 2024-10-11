@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Head from "next/head";
 
@@ -8,6 +8,13 @@ export default function Home() {
   const [score, setScore] = useState("");
   const [testName, setTestName] = useState("");
   const [imageSrc, setImageSrc] = useState("");
+  const [currentUrl, setCurrentUrl] = useState(""); // Store the current URL for metadata
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setCurrentUrl(window.location.href); // Set the current URL after component mounts
+    }
+  }, []);
 
   const generateImage = async () => {
     try {
@@ -22,16 +29,18 @@ export default function Home() {
       if (response.ok) {
         const { imagePath } = await response.json();
         setImageSrc(imagePath);
-        console.log(imageSrc);
+        console.log(imagePath);
       }
     } catch (error) {
       console.error("Failed to generate image");
     }
   };
+
   const imageUrl = `${process.env.NEXT_PUBLIC_AWS_BUCKETURL}/${imageSrc}`;
+
   const shareOnLinkedIn = () => {
     const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-      window.location.href
+      currentUrl
     )}`;
     window.open(linkedInUrl, "_blank");
     console.log(linkedInUrl);
@@ -44,7 +53,7 @@ export default function Home() {
         <meta property="og:title" content={`${testName} - ${name}'s Score`} />
         <meta property="og:description" content={`Score: ${score}`} />
         <meta property="og:image" content={imageUrl} />
-        <meta property="og:url" content={window.location.href} />
+        <meta property="og:url" content={currentUrl} /> {/* Safe client-side check */}
       </Head>
 
       <h1>Score Image Generator</h1>
@@ -67,9 +76,9 @@ export default function Home() {
         onChange={(e) => setTestName(e.target.value)}
       />
       <button onClick={generateImage}>Generate Image</button>
+
       {imageSrc && (
         <>
-          {/* <Image src={imageSrc} alt="Score" width={500} height={500} /> */}
           <Image src={imageUrl} alt="Score" width={500} height={500} />
           <button onClick={shareOnLinkedIn}>Share on LinkedIn</button>
         </>
