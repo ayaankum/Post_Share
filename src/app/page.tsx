@@ -2,14 +2,15 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Head from "next/head";
+import { generateimage } from "../../utils/generate-image";
 
 export default function Home() {
   const [name, setName] = useState("");
   const [score, setScore] = useState("");
   const [testName, setTestName] = useState("");
   const [imageSrc, setImageSrc] = useState("");
-  const [currentUrl, setCurrentUrl] = useState(""); // Store the current URL for metadata
 
+  const [currentUrl, setCurrentUrl] = useState(""); // Store the current URL for metadata
   useEffect(() => {
     if (typeof window !== "undefined") {
       setCurrentUrl(window.location.href); // Set the current URL after component mounts
@@ -17,23 +18,9 @@ export default function Home() {
   }, []);
 
   const generateImage = async () => {
-    try {
-      const response = await fetch("/api/generate-image", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, score, testName }),
-      });
-
-      if (response.ok) {
-        const { imagePath } = await response.json();
-        setImageSrc(imagePath);
-        console.log(imagePath);
-      }
-    } catch (error) {
-      console.error("Failed to generate image");
-    }
+    const res = await generateimage({ name, score, testName });
+    setImageSrc(res as string);
+    console.log(res);
   };
 
   const imageUrl = `${process.env.NEXT_PUBLIC_AWS_BUCKETURL}/${imageSrc}`;
@@ -53,7 +40,8 @@ export default function Home() {
         <meta property="og:title" content={`${testName} - ${name}'s Score`} />
         <meta property="og:description" content={`Score: ${score}`} />
         <meta property="og:image" content={imageUrl} />
-        <meta property="og:url" content={currentUrl} /> {/* Safe client-side check */}
+        <meta property="og:url" content={currentUrl} />{" "}
+        {/* Safe client-side check */}
       </Head>
 
       <h1>Score Image Generator</h1>
